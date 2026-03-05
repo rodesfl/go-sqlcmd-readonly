@@ -263,7 +263,10 @@ func Execute(version string) {
 				os.Exit(0)
 			}
 
-			exitCode, _ := run(vars, &args)
+			exitCode, err := run(vars, &args)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+			}
 			os.Exit(exitCode)
 
 		},

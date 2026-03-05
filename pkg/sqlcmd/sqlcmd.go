@@ -161,9 +161,9 @@ func (s *Sqlcmd) Run(once bool, processAll bool) error {
 			}
 		}
 		if cmd != nil {
-			lastError = nil
 			err = s.RunCommand(cmd, args)
 			if err == ErrExitRequested || once {
+				lastError = err
 				break
 			}
 			if err != nil {
@@ -454,6 +454,11 @@ func (s *Sqlcmd) getRunnableQuery(q string) string {
 // -102: Conversion error occurred when selecting return value
 func (s *Sqlcmd) runQuery(query string) (int, error) {
 	retcode := -101
+
+	if !IsReadOnlyQuery(query) {
+		return retcode, &WriteQueryError{Query: query}
+	}
+
 	s.Format.BeginBatch(query, s.vars, s.GetOutput(), s.GetError())
 	ctx := context.Background()
 	timeout := s.vars.QueryTimeoutSeconds()
