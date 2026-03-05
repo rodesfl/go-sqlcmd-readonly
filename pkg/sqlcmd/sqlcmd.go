@@ -552,9 +552,9 @@ func (s *Sqlcmd) runQuery(query string) (int, error) {
 			}
 			if rowsLimited {
 				s.Format.AddMessage(localizer.Sprintf("(%d rows limited)", maxRows))
-				// Stop processing further rows and result sets once the limit is reached
-				// to avoid waiting on the server to finish sending the full result.
-				_ = rows.Close()
+				if rows != nil {
+					_ = rows.Close()
+				}
 				results = false
 			}
 			if retcode != -102 {
@@ -568,6 +568,11 @@ func (s *Sqlcmd) runQuery(query string) (int, error) {
 		}
 	}
 	s.Format.EndBatch()
+	if summarizer, ok := s.Format.(interface {
+		SetSummary(rowCount int64, limited bool, limit int64)
+	}); ok {
+		summarizer.SetSummary(rowCount, rowsLimited, maxRows)
+	}
 	return retcode, qe
 }
 

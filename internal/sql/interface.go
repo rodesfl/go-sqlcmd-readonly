@@ -18,4 +18,5 @@ type ConnectOptions struct {
 
 	Interactive bool
 	MaxRows     int
+	OutputFormat string
 }

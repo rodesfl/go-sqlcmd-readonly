@@ -83,6 +83,7 @@ type SQLCmdArguments struct {
 	ChangePasswordAndExit       string
 	TraceFile                   string
 	ServerNameOverride          string
+	OutputFormat                string
 	// Keep Help at the end of the list
 	Help bool
 }
@@ -172,6 +173,8 @@ func (a *SQLCmdArguments) Validate(c *cobra.Command) (err error) {
 			err = rangeParameterError("-t", fmt.Sprint(a.QueryTimeout), 0, 65534, true)
 		case a.ServerCertificate != "" && !encryptConnectionAllowsTLS(a.EncryptConnection):
 			err = localizer.Errorf("The -J parameter requires encryption to be enabled (-N true, -N mandatory, or -N strict).")
+		case a.OutputFormat != "" && a.OutputFormat != "table" && a.OutputFormat != "ndjson":
+			err = invalidParameterError("--output", a.OutputFormat, "table", "ndjson")
 		}
 	}
 	if err != nil {
@@ -511,6 +514,8 @@ func setFlags(rootCmd *cobra.Command, args *SQLCmdArguments) {
 	rootCmd.Flags().BoolVarP(&args.EnableColumnEncryption, "enable-column-encryption", "g", false, localizer.Sprintf("Enable column encryption"))
 	rootCmd.Flags().StringVarP(&args.ChangePassword, "change-password", "z", "", localizer.Sprintf("New password"))
 	rootCmd.Flags().StringVarP(&args.ChangePasswordAndExit, "change-password-exit", "Z", "", localizer.Sprintf("New password and exit"))
+
+	rootCmd.Flags().StringVar(&args.OutputFormat, "output", "table", localizer.Sprintf("Output format: table or ndjson"))
 }
 
 func setScriptVariable(v string) string {
@@ -865,7 +870,11 @@ func run(vars *sqlcmd.Variables, args *SQLCmdArguments) (int, error) {
 	}
 
 	s.Connect = &connectConfig
-	s.Format = sqlcmd.NewSQLCmdDefaultFormatter(args.TrimSpaces, args.getControlCharacterBehavior())
+	if args.OutputFormat == "ndjson" {
+		s.Format = sqlcmd.NewNDJSONFormatter()
+	} else {
+		s.Format = sqlcmd.NewSQLCmdDefaultFormatter(args.TrimSpaces, args.getControlCharacterBehavior())
+	}
 	if args.OutputFile != "" {
 		err = s.RunCommand(s.Cmd["OUT"], []string{args.OutputFile})
 		if err != nil {

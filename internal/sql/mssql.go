@@ -33,7 +33,11 @@ func (m *mssql) Connect(
 		m.console = nil
 	}
 	m.sqlcmd = sqlcmd.New(m.console, "", v)
-	m.sqlcmd.Format = sqlcmd.NewSQLCmdDefaultFormatter(false, sqlcmd.ControlIgnore)
+	if !options.Interactive && options.OutputFormat == "ndjson" {
+		m.sqlcmd.Format = sqlcmd.NewNDJSONFormatter()
+	} else {
+		m.sqlcmd.Format = sqlcmd.NewSQLCmdDefaultFormatter(false, sqlcmd.ControlIgnore)
+	}
 	connect := sqlcmd.ConnectSettings{
 		ServerName: fmt.Sprintf(
 			"%s,%#v",

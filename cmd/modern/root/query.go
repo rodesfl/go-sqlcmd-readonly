@@ -17,9 +17,10 @@ import (
 type Query struct {
 	cmdparser.Cmd
 
-	text     string
-	database string
-	maxRows  int
+	text         string
+	database     string
+	maxRows      int
+	outputFormat string
 }
 
 func (c *Query) DefineCommand(...cmdparser.CommandOptions) {
@@ -77,6 +78,11 @@ func (c *Query) DefineCommand(...cmdparser.CommandOptions) {
 		Name:       "max-rows",
 		Shorthand:  "m",
 		Usage:      localizer.Sprintf("Maximum number of rows to return")})
+
+	c.AddFlag(cmdparser.FlagOptions{
+		String: &c.outputFormat,
+		Name:   "output",
+		Usage:  localizer.Sprintf("Output format: table or ndjson")})
 }
 
 // run executes the Query command.
@@ -88,12 +94,17 @@ func (c *Query) run() {
 
 	s := sql.New(sql.SqlOptions{})
 	if c.text == "" {
-		s.Connect(endpoint, user, sql.ConnectOptions{Database: c.database, Interactive: true})
+		s.Connect(endpoint, user, sql.ConnectOptions{
+			Database:     c.database,
+			Interactive:  true,
+			OutputFormat: "table",
+		})
 	} else {
 		s.Connect(endpoint, user, sql.ConnectOptions{
-			Database:    c.database,
-			Interactive: false,
-			MaxRows:     c.maxRows,
+			Database:     c.database,
+			Interactive:  false,
+			MaxRows:      c.maxRows,
+			OutputFormat: c.outputFormat,
 		})
 	}
 
