@@ -6,6 +6,7 @@ package sqlcmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -36,6 +37,7 @@ const (
 	SQLCMDEDITOR            = "SQLCMDEDITOR"
 	SQLCMDUSEAAD            = "SQLCMDUSEAAD"
 	SQLCMDCOLORSCHEME       = "SQLCMDCOLORSCHEME"
+	SQLCMDMAXROWS           = "SQLCMDMAXROWS"
 )
 
 // builtinVariables are the predefined SQLCMD variables. Their values are printed first by :listvar
@@ -51,6 +53,7 @@ var builtinVariables = []string{
 	SQLCMDLOGINTIMEOUT,
 	SQLCMDMAXFIXEDTYPEWIDTH,
 	SQLCMDMAXVARTYPEWIDTH,
+	SQLCMDMAXROWS,
 	SQLCMDPACKETSIZE,
 	SQLCMDSERVER,
 	SQLCMDSTATTIMEOUT,
@@ -203,6 +206,11 @@ func (v Variables) QueryTimeoutSeconds() int64 {
 	return mustValue(v[SQLCMDSTATTIMEOUT])
 }
 
+// MaxRows limits the number of rows returned by a query. Any value <= 0 specifies unlimited
+func (v Variables) MaxRows() int64 {
+	return mustValue(v[SQLCMDMAXROWS])
+}
+
 func mustValue(val string) int64 {
 	var n int64
 	_, err := fmt.Sscanf(val, "%d", &n)
@@ -223,6 +231,7 @@ var defaultVariables = Variables{
 	SQLCMDLOGINTIMEOUT:      "30",
 	SQLCMDMAXFIXEDTYPEWIDTH: "0",
 	SQLCMDMAXVARTYPEWIDTH:   "256",
+	SQLCMDMAXROWS:           strconv.Itoa(DefaultMaxRows),
 	SQLCMDSTATTIMEOUT:       "0",
 }
 
@@ -240,6 +249,7 @@ func InitializeVariables(fromEnvironment bool) *Variables {
 		SQLCMDLOGINTIMEOUT:      defaultVariables[SQLCMDLOGINTIMEOUT],
 		SQLCMDMAXFIXEDTYPEWIDTH: defaultVariables[SQLCMDMAXFIXEDTYPEWIDTH],
 		SQLCMDMAXVARTYPEWIDTH:   defaultVariables[SQLCMDMAXVARTYPEWIDTH],
+		SQLCMDMAXROWS:           defaultVariables[SQLCMDMAXROWS],
 		SQLCMDPACKETSIZE:        "4096",
 		SQLCMDSERVER:            "",
 		SQLCMDSTATTIMEOUT:       defaultVariables[SQLCMDSTATTIMEOUT],

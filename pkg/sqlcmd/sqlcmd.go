@@ -42,6 +42,8 @@ var (
 	ErrCommandsDisabled = &CommonSqlcmdErr{
 		message: ErrCmdDisabled,
 	}
+	// DefaultMaxRows is the default maximum number of rows to return in non-interactive mode
+	DefaultMaxRows = 500
 )
 
 // Console defines methods used for console input and output
@@ -109,6 +111,11 @@ func New(l Console, workingDirectory string, vars *Variables) *Sqlcmd {
 		return false
 	}
 	return s
+}
+
+// SetVar sets a scripting variable
+func (s *Sqlcmd) SetVar(name, value string) {
+	s.vars.Set(name, value)
 }
 
 func (s *Sqlcmd) scanNext() (string, error) {
@@ -476,6 +483,9 @@ func (s *Sqlcmd) runQuery(query string) (int, error) {
 	var cols []*sql.ColumnType
 	results := true
 	first := true
+	maxRows := s.vars.MaxRows()
+	rowCount := int64(0)
+	rowsLimited := false
 	for qe == nil && results {
 		msg := retmsg.Message(ctx)
 		switch m := msg.(type) {
@@ -525,7 +535,12 @@ func (s *Sqlcmd) runQuery(query string) (int, error) {
 			}
 			inresult := rows.Next()
 			for inresult {
+				if maxRows > 0 && rowCount >= maxRows {
+					rowsLimited = true
+					break
+				}
 				col1 := s.Format.AddRow(rows)
+				rowCount++
 				inresult = rows.Next()
 				if !inresult {
 					if col1 == "" {
@@ -534,6 +549,13 @@ func (s *Sqlcmd) runQuery(query string) (int, error) {
 						retcode = -102
 					}
 				}
+			}
+			if rowsLimited {
+				s.Format.AddMessage(localizer.Sprintf("(%d rows limited)", maxRows))
+				// Stop processing further rows and result sets once the limit is reached
+				// to avoid waiting on the server to finish sending the full result.
+				_ = rows.Close()
+				results = false
 			}
 			if retcode != -102 {
 				if err = rows.Err(); err != nil {

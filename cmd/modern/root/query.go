@@ -19,6 +19,7 @@ type Query struct {
 
 	text     string
 	database string
+	maxRows  int
 }
 
 func (c *Query) DefineCommand(...cmdparser.CommandOptions) {
@@ -33,6 +34,9 @@ func (c *Query) DefineCommand(...cmdparser.CommandOptions) {
 			}},
 			{Description: localizer.Sprintf("Run a query using [%s] database", "master"), Steps: []string{
 				`sqlcmd query "SELECT DB_NAME()" --database master`,
+			}},
+			{Description: localizer.Sprintf("Limit query results to 100 rows"), Steps: []string{
+				`sqlcmd query "SELECT * FROM sys.objects" --max-rows 100`,
 			}},
 			{Description: localizer.Sprintf("Set new default database"), Steps: []string{
 				fmt.Sprintf(`sqlcmd query "ALTER LOGIN [%s] WITH DEFAULT_DATABASE = [tempdb]" --database master`,
@@ -66,6 +70,13 @@ func (c *Query) DefineCommand(...cmdparser.CommandOptions) {
 		Name:      "database",
 		Shorthand: "d",
 		Usage:     localizer.Sprintf("Database to use")})
+
+	c.AddFlag(cmdparser.FlagOptions{
+		Int:        &c.maxRows,
+		DefaultInt: 500,
+		Name:       "max-rows",
+		Shorthand:  "m",
+		Usage:      localizer.Sprintf("Maximum number of rows to return")})
 }
 
 // run executes the Query command.
@@ -79,7 +90,11 @@ func (c *Query) run() {
 	if c.text == "" {
 		s.Connect(endpoint, user, sql.ConnectOptions{Database: c.database, Interactive: true})
 	} else {
-		s.Connect(endpoint, user, sql.ConnectOptions{Database: c.database, Interactive: false})
+		s.Connect(endpoint, user, sql.ConnectOptions{
+			Database:    c.database,
+			Interactive: false,
+			MaxRows:     c.maxRows,
+		})
 	}
 
 	s.Query(c.text)

@@ -23,6 +23,11 @@ import (
 
 const oneRowAffected = "(1 row affected)"
 
+func TestDefaultMaxRows(t *testing.T) {
+	v := InitializeVariables(false)
+	assert.EqualValues(t, DefaultMaxRows, v.MaxRows(), "SQLCMDMAXROWS should default to DefaultMaxRows")
+}
+
 func TestConnectionStringFromSqlCmd(t *testing.T) {
 	type connectionStringTest struct {
 		settings         *ConnectSettings

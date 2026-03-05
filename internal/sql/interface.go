@@ -17,4 +17,5 @@ type ConnectOptions struct {
 	Database string
 
 	Interactive bool
+	MaxRows     int
 }

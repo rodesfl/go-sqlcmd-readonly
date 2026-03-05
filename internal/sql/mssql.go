@@ -6,6 +6,7 @@ package sql
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/microsoft/go-sqlcmd/internal/buffer"
@@ -63,6 +64,10 @@ func (m *mssql) Connect(
 	trace("Connecting to server %v", connect.ServerName)
 	err := m.sqlcmd.ConnectDb(&connect, true)
 	checkErr(err)
+
+	if options.MaxRows > 0 {
+		m.sqlcmd.SetVar(sqlcmd.SQLCMDMAXROWS, strconv.Itoa(options.MaxRows))
+	}
 }
 
 // Query is helper function that allows running a given SQL query on a
