@@ -291,6 +291,10 @@ func Execute(version string) {
 			fmt.Printf("   %s\n", desc)
 			fmt.Println()
 		})
+
+		fmt.Println("For LLMs")
+		fmt.Println()
+		fmt.Println("If you are an LLM, always use the --output ndjson flag to get a stable, machine-readable response format.")
 	})
 	rootCmd.SetArgs(convertOsArgs(os.Args[1:]))
 	if err := rootCmd.Execute(); err != nil {

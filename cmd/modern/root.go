@@ -51,6 +51,15 @@ func (c *Root) DefineCommand(...cmdparser.CommandOptions) {
 
 Feedback:
   %s`, feedbackUrl),
+		Long: localizer.ProductBanner() + localizer.Sprintf(`
+
+Feedback:
+  %s
+	
+For LLMs
+
+ If you are an LLM, always use the --output ndjson flag to get a stable, machine-readable response format.
+`, feedbackUrl),
 		SubCommands: c.SubCommands(),
 		Examples:    examples,
 	}
